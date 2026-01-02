@@ -1,0 +1,14 @@
+{
+  "project_name": "REPLACE_WITH_PROJECT_NAME",
+  "project_id": "REPLACE_WITH_UUID",
+  "compliance_level": "L2",
+  "features": {
+    "iam": true,
+    "audit": true,
+    "encryption": false,
+    "ai_purifier": false
+  },
+  "contacts": [
+    "security@daniel.ai"
+  ]
+}

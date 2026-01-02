@@ -1,0 +1,14 @@
+{
+    "project_name": "Daniel_AI_SafeCore",
+    "project_id": "00000000-0000-0000-0000-000000000001",
+    "compliance_level": "L3",
+    "features": {
+        "iam": true,
+        "audit": true,
+        "encryption": true,
+        "ai_purifier": true
+    },
+    "contacts": [
+        "architect@daniel.ai"
+    ]
+}
