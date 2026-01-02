@@ -57,21 +57,28 @@ app.use('/api', (req, res, next) => { // Apply SDK only to API routes
  */
 app.post('/api/clinical/ingest', (req, res) => {
     try {
-        const logic = req.safeCore;
+        const securityLayer = req.safeCore;
 
-        // 4. Sanitize Input (AI Purifier)
-        const cleanData = logic.sanitizeInput(req.body);
+        // 1. Sanitize and Purify Input
+        const rawData = req.body.data;
+        const cleanData = securityLayer.sanitizeInput(rawData);
 
-        // 5. Encrypt & Store (Data Layer)
-        const dataConn = new DataLayerConnector("gateway-ctx");
-        const encryptedBlob = dataConn.protectAndStore(JSON.stringify(cleanData), "ClinicalIngest");
+        // 2. Encrypt and Archive via Data Layer
+        const dataLayer = new DataLayerConnector("CLINICAL_GATEWAY");
+        const encryptedResult = dataLayer.protectAndStore(cleanData, "clinical_record");
 
-        res.status(201).json({
-            status: "securely_archived",
-            ref: encryptedBlob.substring(0, 20) + "..."
+        res.json({
+            status: "SUCCESS",
+            ref: `SC-${Math.floor(Math.random() * 1000000)}`,
+            protected_data: encryptedResult // Mock encrypted payload
         });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+
+    } catch (err) {
+        console.error(`[SAFECORE_DENIED] ${err.message}`);
+        res.status(403).json({
+            status: "DENIED",
+            error: err.message
+        });
     }
 });
 

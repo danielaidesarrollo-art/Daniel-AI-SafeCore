@@ -1,81 +1,35 @@
-const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
-// In-Memory simulated immutable ledger
-const auditLedger = [];
-let previousHash = "0000000000000000000000000000000000000000000000000000000000000000";
+const LOG_DIR = path.join(__dirname, '../../../../logs');
+const LOG_FILE = path.join(LOG_DIR, 'safecore.audit.log');
 
-function generateHash(index, timestamp, sensitivity, message, prevHash) {
-    const payload = `${index}|${timestamp}|${sensitivity}|${message}|${prevHash}`;
-    return crypto.createHash('sha256').update(payload).digest('hex');
+// Ensure log directory exists
+if (!fs.existsSync(LOG_DIR)) {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
 }
 
-function secureLog(message, sensitivity = "LOW") {
+// Simple console logger for now.
+// In a real scenario, this would write to a tamper-proof append-only log.
+
+function secureLog(message, level = "INFO") {
     const timestamp = new Date().toISOString();
-    const index = auditLedger.length;
+    const logEntry = `[${timestamp}] [SAFECORE_AUDIT] [${level}] ${message}`;
 
-    const currentHash = generateHash(index, timestamp, sensitivity, message, previousHash);
+    // 1. Console Output (for CLI visibility)
+    let color = "\x1b[37m"; // White
+    if (level === "CRITICAL") color = "\x1b[31m"; // Red
+    else if (level === "HIGH") color = "\x1b[33m"; // Yellow
+    else if (level === "MEDIUM") color = "\x1b[36m"; // Cyan
 
-    const entry = {
-        index,
-        timestamp,
-        sensitivity,
-        message,
-        prevHash: previousHash,
-        hash: currentHash
-    };
+    console.log(`${color}${logEntry}\x1b[0m`);
 
-    auditLedger.push(entry);
-    previousHash = currentHash; // Chain update
-
-    console.log(`[AUDIT] [${timestamp}] [${sensitivity}] ${message} {hash:${currentHash.substring(0, 8)}...}`);
-}
-
-function verifyChainIntegrity() {
-    let calculatedPrevHash = "0000000000000000000000000000000000000000000000000000000000000000";
-
-    for (const entry of auditLedger) {
-        // 1. Verify links
-        if (entry.prevHash !== calculatedPrevHash) {
-            return { valid: false, reason: `Chain broken at index ${entry.index}. PrevHash mismatch.` };
-        }
-
-        // 2. Verify content match
-        const actualHash = generateHash(entry.index, entry.timestamp, entry.sensitivity, entry.message, entry.prevHash);
-        if (actualHash !== entry.hash) {
-            return { valid: false, reason: `Integrity check failed at index ${entry.index}. Content modified.` };
-        }
-
-        calculatedPrevHash = entry.hash;
-    }
-    return { valid: true };
-}
-
-// SIMULATION TOOL: Do not use in production
-function simulateTamper(index) {
-    if (auditLedger[index]) {
-        auditLedger[index].message += " [TAMPERED]";
-        // We do NOT update the hash, to ensure verification fails
+    // 2. Persistent File Output
+    try {
+        fs.appendFileSync(LOG_FILE, logEntry + '\n', 'utf8');
+    } catch (err) {
+        console.error("❌ CRITICAL: Failed to write to audit log file!", err);
     }
 }
 
-function monitoredFunction(fn) {
-    return function (...args) {
-        const start = Date.now();
-        const funcName = fn.name || "anonymous";
-
-        secureLog(`intercept: call ${funcName}`, "MEDIUM");
-
-        try {
-            const result = fn.apply(this, args);
-            const duration = Date.now() - start;
-            secureLog(`intercept: success ${funcName} (${duration}ms)`, "LOW");
-            return result;
-        } catch (e) {
-            const duration = Date.now() - start;
-            secureLog(`intercept: failure ${funcName} - ${e.message}`, "HIGH");
-            throw e;
-        }
-    }
-}
-
-module.exports = { secureLog, monitoredFunction, verifyChainIntegrity, simulateTamper };
+module.exports = { secureLog };

@@ -5,100 +5,246 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daniel_AI SafeCore Dashboard</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
 
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 400px;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Daniel_AI SafeCore Dashboard</title>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --bg: #0a0b10;
+                --glass: rgba(255, 255, 255, 0.05);
+                --border: rgba(255, 255, 255, 0.1);
+                --accent: #00f2ff;
+                --accent-glow: rgba(0, 242, 255, 0.3);
+                --text: #e0e0e0;
+                --danger: #ff4d4d;
+            }
 
-        .hidden {
-            display: none;
-        }
+            body {
+                font-family: 'Outfit', sans-serif;
+                background: var(--bg);
+                background-image:
+                    radial-gradient(circle at 20% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 80% 80%, rgba(123, 31, 162, 0.05) 0%, transparent 40%);
+                color: var(--text);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                overflow: hidden;
+            }
 
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
+            .glass-panel {
+                background: var(--glass);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid var(--border);
+                border-radius: 24px;
+                padding: 3rem;
+                width: 420px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                animation: fadeIn 0.8s ease-out;
+                position: relative;
+            }
 
-        button:hover {
-            background: #0056b3;
-        }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
 
-        input {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
-            box-sizing: border-box;
-        }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-        .alert {
-            background: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-            display: none;
-        }
+            .shield-icon {
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 2rem;
+                background: var(--accent-glow);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid var(--accent);
+                box-shadow: 0 0 20px var(--accent-glow);
+                animation: pulse 3s infinite;
+            }
 
-        .success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 10px;
-            display: none;
-        }
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                    box-shadow: 0 0 20px var(--accent-glow);
+                }
 
-        #timer {
-            font-size: 0.8em;
-            color: #666;
-            text-align: center;
-            margin-top: 15px;
-        }
-    </style>
-</head>
+                50% {
+                    transform: scale(1.05);
+                    box-shadow: 0 0 35px var(--accent-glow);
+                }
+
+                100% {
+                    transform: scale(1);
+                    box-shadow: 0 0 20px var(--accent-glow);
+                }
+            }
+
+            h2 {
+                font-weight: 600;
+                text-align: center;
+                margin-bottom: 2rem;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                font-size: 1.2rem;
+                color: var(--accent);
+            }
+
+            input,
+            textarea {
+                width: 100%;
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid var(--border);
+                padding: 12px 16px;
+                border-radius: 12px;
+                color: white;
+                margin-bottom: 1rem;
+                font-family: inherit;
+                transition: all 0.3s ease;
+            }
+
+            input:focus,
+            textarea:focus {
+                outline: none;
+                border-color: var(--accent);
+                box-shadow: 0 0 10px var(--accent-glow);
+            }
+
+            button {
+                width: 100%;
+                background: var(--accent);
+                color: #000;
+                border: none;
+                padding: 14px;
+                border-radius: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-top: 1rem;
+            }
+
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px -5px var(--accent-glow);
+                filter: brightness(1.1);
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            .status-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                background: rgba(0, 242, 255, 0.1);
+                color: var(--accent);
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                border: 1px solid var(--accent);
+                margin-bottom: 1.5rem;
+            }
+
+            .mfa-check {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 0.9rem;
+                color: #888;
+                margin-bottom: 1rem;
+            }
+
+            #timer {
+                text-align: center;
+                font-size: 0.8rem;
+                color: #555;
+                margin-top: 2rem;
+            }
+
+            #time-left {
+                color: var(--accent);
+                font-weight: 600;
+            }
+
+            .msg {
+                padding: 12px;
+                border-radius: 10px;
+                font-size: 0.9rem;
+                margin-top: 1rem;
+                display: none;
+                text-align: center;
+            }
+
+            .alert {
+                background: rgba(255, 77, 77, 0.1);
+                color: var(--danger);
+                border: 1px solid var(--danger);
+            }
+
+            .success {
+                background: rgba(0, 242, 255, 0.1);
+                color: var(--accent);
+                border: 1px solid var(--accent);
+            }
+        </style>
+    </head>
 
 <body>
-    <div id="login-view" class="container">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="daniel_ai_logo.jpg" alt="Daniel_AI Logo" style="max-width: 150px; border-radius: 50%;">
+    <div id="login-view" class="glass-panel">
+        <div class="shield-icon">
+            <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="2" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
         </div>
-        <h2>🔐 SafeCore Access</h2>
-        <input type="text" id="username" placeholder="User ID" value="doctor-who">
-        <label><input type="checkbox" id="mfa-toggle" checked> Simulate MFA Device</label>
-        <button onclick="login()">Authenticate</button>
-        <div id="login-msg" class="alert"></div>
+        <h2>SafeCore Access</h2>
+        <div class="status-badge">ORCHESTRATOR v1.0</div>
+
+        <input type="text" id="username" placeholder="Enter Secure ID" value="doctor-who">
+        <label class="mfa-check">
+            <input type="checkbox" id="mfa-toggle" checked style="width: auto; margin:0">
+            Biometric MFA Verified
+        </label>
+
+        <button onclick="login()">Initiate Handshake</button>
+        <div id="login-msg" class="msg alert"></div>
     </div>
 
-    <div id="dashboard-view" class="container hidden">
-        <h2>🏥 Clinical Dashboard</h2>
-        <p>Welcome, <span id="user-display"></span></p>
-        <hr>
-        <h3>Ingest Patient Data</h3>
-        <textarea id="clinical-data" rows="4" style="width:100%">Patient exhibits signs of... [PHI]</textarea>
-        <button onclick="submitData()">Encrypt & Archive</button>
-        <div id="app-msg" class="success"></div>
-        <div id="timer">Session expires in: <span id="time-left">900</span>s</div>
-        <button onclick="logout()" style="background: #666; margin-top: 20px;">Logout</button>
+    <div id="dashboard-view" class="glass-panel hidden">
+        <div class="status-badge">ACTIVE DEFENSE: ONLINE</div>
+        <h2>Clinical Terminal</h2>
+        <p style="text-align:center; font-size: 0.9rem; color: #888;">Authenticated as <span id="user-display"
+                style="color:var(--accent)"></span></p>
+
+        <div style="margin: 2rem 0;">
+            <label style="display:block; margin-bottom: 0.5rem; font-size: 0.8rem; color: #666;">ENCRYPTED STORAGE
+                BUFFER</label>
+            <textarea id="clinical-data" rows="4"
+                placeholder="Input patient PHI for encrypted archiving...">Patient exhibits signs of... [PHI]</textarea>
+        </div>
+
+        <button onclick="submitData()">Secure & Archive</button>
+        <div id="app-msg" class="msg success"></div>
+
+        <div id="timer">Session Pulse: <span id="time-left">900</span>s</div>
+        <button onclick="logout()"
+            style="background: transparent; border: 1px solid var(--border); color: #666; margin-top: 2rem;">Terminate
+            Session</button>
     </div>
 
     <script src="client.js"></script>

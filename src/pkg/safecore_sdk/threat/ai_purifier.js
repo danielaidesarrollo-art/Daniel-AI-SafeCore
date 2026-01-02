@@ -1,66 +1,63 @@
-const { secureLog } = require('../audit/interceptor');
+const MALICIOUS_PATTERNS = [
+    /<script>/i,
+    /javascript:/i,
+    /DROP TABLE/i,
+    /SELECT \* FROM/i,
+    /--/
+];
 
 class AIPurifier {
-    constructor() {
-        this.riskThreshold = 0.7;
-    }
+    static assessRisk(inputData) {
+        if (typeof inputData !== 'string') {
+            // For now, only sanitizing strings. Objects pass through cautiously.
+            return { blocked: false, reason: "Non-string input" };
+        }
 
-    /**
-     * Assess the risk of the input data with Context Awareness.
-     * @param {Object|string} input - The data to analyze
-     * @param {Object} context - { type: 'text'|'email'|'name'|'medical_code', user_role: string }
-     * @returns {Object} { score: number, blocked: boolean, reason: string }
-     */
-    assessRisk(input, context = {}) {
-        const strInput = JSON.stringify(input).toLowerCase();
-        let riskScore = 0.0;
-        let reasons = [];
-
-        // 0. Contextual Integrity Check (10/10 Feature)
-        if (context.type) {
-            // Block Binary/Image data in text fields (Base64 heuristic)
-            if (['name', 'email', 'medical_code'].includes(context.type)) {
-                // Check if input looks like a massive contiguous string (base64 blob)
-                // Heuristic: >500 chars and NO spaces
-                if (strInput.length > 500 && !strInput.includes(' ')) {
-                    riskScore += 1.0;
-                    reasons.push(`Context Violation: Suspicious binary/packed data in '${context.type}' field`);
-                }
+        // 1. Signature-Based Detection (Regex)
+        for (const pattern of MALICIOUS_PATTERNS) {
+            if (pattern.test(inputData)) {
+                return {
+                    blocked: true,
+                    reason: `Pattern matched: ${pattern}`
+                };
             }
         }
 
-        // 1. SQL Injection Heuristics (Weight: 0.8)
-        if (strInput.match(/(\bdrop\b\s+\btable\b|\bselect\b\s+\*\s+\bfrom\b|\bunion\b\s+\bselect\b|' OR '1'='1)/i)) {
-            let weight = 0.8;
-            if (context.type === 'email' || context.type === 'name') weight = 1.0;
-
-            riskScore += weight;
-            reasons.push("SQL Injection Pattern Detected");
+        // 2. Heuristic Analysis
+        // 2.1 Shannon Entropy Check (Detect obfuscated/encrypted payloads)
+        const entropy = this.calculateEntropy(inputData);
+        if (entropy > 4.5 && inputData.length > 50) {
+            return {
+                blocked: true,
+                reason: `High entropy detected (${entropy.toFixed(2)}): Possible obfuscation`
+            };
         }
 
-        // 2. XSS / Script Injection Heuristics (Weight: 0.9)
-        if (strInput.match(/(<script>|javascript:|onerror=|onload=|<\/script>)/i)) {
-            riskScore += 0.9;
-            reasons.push("XSS/Script Injection Pattern Detected");
+        // 2.2 Suspicious Character Ratio
+        const suspiciousChars = (inputData.match(/[^a-zA-Z0-9\s]/g) || []).length;
+        if (suspiciousChars / inputData.length > 0.4 && inputData.length > 10) {
+            return {
+                blocked: true,
+                reason: "Suspicious character density: Potential exploit payload"
+            };
         }
 
-        // 3. PHI Leakage Heuristics (Weight: 0.7)
-        const ssnMatches = (strInput.match(/\d{3}-\d{2}-\d{4}/g) || []).length;
-        if (ssnMatches > 5) {
-            riskScore += 0.7;
-            reasons.push(`Massive PHI Leakage Potential (${ssnMatches} SSNs)`);
+        return { blocked: false, reason: "Clean" };
+    }
+
+    static calculateEntropy(str) {
+        const len = str.length;
+        const freq = {};
+        for (let i = 0; i < len; i++) {
+            freq[str[i]] = (freq[str[i]] || 0) + 1;
         }
-
-        // Cap score at 1.0
-        riskScore = Math.min(riskScore, 1.0);
-
-        if (riskScore >= this.riskThreshold) {
-            secureLog(`Threat Detected: ${reasons.join(", ")} (Score: ${riskScore})`, "HIGH");
-            return { score: riskScore, blocked: true, reason: reasons.join("; ") };
+        let entropy = 0;
+        for (const f in freq) {
+            const p = freq[f] / len;
+            entropy -= p * Math.log2(p);
         }
-
-        return { score: riskScore, blocked: false, reason: null };
+        return entropy;
     }
 }
 
-module.exports = new AIPurifier();
+module.exports = AIPurifier;

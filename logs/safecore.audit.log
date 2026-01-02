@@ -1,0 +1,4 @@
+[2026-01-02T03:38:56.915Z] [SAFECORE_AUDIT] [LOW] StateManager: System Initialized (NORMAL)
+[2026-01-02T03:38:56.918Z] [SAFECORE_AUDIT] [CRITICAL] Unauth logic access attempt
+[2026-01-02T03:38:56.919Z] [SAFECORE_AUDIT] [LOW] Logic boundary crossed
+[2026-01-02T03:38:56.924Z] [SAFECORE_AUDIT] [HIGH] Malicious input blocked: Pattern matched: /SELECT \* FROM/i

@@ -6,8 +6,8 @@ async function generatePdf() {
     try {
         const pdf = await mdToPdf({ path: 'docs/Audit_Report.md' }).catch(console.error);
         if (pdf) {
-            require('fs').writeFileSync('docs/Daniel_AI_SafeCore_Audit_Report.pdf', pdf.content);
-            console.log("✅ PDF Generated: docs/Daniel_AI_SafeCore_Audit_Report.pdf");
+            require('fs').writeFileSync('docs/SafeCore_Final_Report_v2.pdf', pdf.content);
+            console.log("✅ PDF Generated: docs/SafeCore_Final_Report_v2.pdf");
         }
     } catch (error) {
         console.error("❌ PDF Generation Failed:", error);

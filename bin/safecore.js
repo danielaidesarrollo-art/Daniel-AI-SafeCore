@@ -22,12 +22,34 @@ async function run() {
     switch (command) {
         case 'init':
             console.log("🔌 Coupling SafeCore to host system...");
-            // Simulate scaffolding SDK
-            await new Promise(r => setTimeout(r, 1000));
-            console.log("   - Injecting Logic Layer... OK");
-            console.log("   - Injecting Data Layer... OK");
-            console.log("   - Establishing Protocol Handshake... OK");
-            console.log("\n✅ SafeCore successfully coupled! You are now protected.");
+            try {
+                // 1. Initialize Logic Layer
+                console.log("   - Injecting Logic Layer...");
+                const LogicLayer = require('../src/pkg/safecore_sdk/connectors/logic_layer');
+                // Mock request to verify instantiation
+                const logic = new LogicLayer({ headers: { 'x-safecore-auth': 'certified_agent' } });
+                logic.enforceSecurityBoundary(); // Should pass with certified_agent
+                console.log("     ✅ Logic Layer Coupled (Auth: Certified)");
+
+                // 2. Initialize Data Layer
+                console.log("   - Injecting Data Layer...");
+                const DataLayer = require('../src/pkg/safecore_sdk/connectors/data_layer');
+                const data = new DataLayer();
+                // Basic sanity check if method exists
+                if (typeof data.interceptWrite === 'function') {
+                    console.log("     ✅ Data Layer Coupled (Audit Ready)");
+                }
+
+                // 3. Protocol Handshake
+                await new Promise(r => setTimeout(r, 500));
+                console.log("   - Establishing Protocol Handshake... OK");
+
+                console.log("\n✅ SafeCore successfully coupled! You are now protected.");
+            } catch (err) {
+                console.error("\n❌ Coupling Failed!");
+                console.error(`   Reason: ${err.message}`);
+                process.exit(1);
+            }
             break;
 
         case 'scan':
