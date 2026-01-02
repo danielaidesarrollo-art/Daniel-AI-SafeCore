@@ -37,11 +37,16 @@ class LogicLayerConnector {
         if (!this.isAuthenticated) {
             throw new Error("SafeCore: Auth required before sanitization");
         }
-        // AI Purifier Stub
-        if (JSON.stringify(inputData).includes("<script>")) {
-            secureLog("Malicious input blocked", "HIGH");
-            throw new Error("SafeCore: Threat Detected by Purifier");
+
+        // Advanced AI Purifier Risk Assessment
+        const AIPurifier = require('../threat/ai_purifier');
+        const assessment = AIPurifier.assessRisk(inputData);
+
+        if (assessment.blocked) {
+            secureLog(`Malicious input blocked: ${assessment.reason}`, "HIGH");
+            throw new Error(`SafeCore: Threat Detected by Purifier (${assessment.reason})`);
         }
+
         return inputData;
     }
 }

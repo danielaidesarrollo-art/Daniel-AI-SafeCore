@@ -1,23 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daniel_AI SafeCore Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; }
-        .hidden { display: none; }
-        button { background: #007bff; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px; }
-        button:hover { background: #0056b3; }
-        input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
-        .alert { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 10px; display: none; }
-        .success { background: #e8f5e9; color: #2e7d32; padding: 10px; border-radius: 4px; margin-top: 10px; display: none; }
-        #timer { font-size: 0.8em; color: #666; text-align: center; margin-top: 15px; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        .alert {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #timer {
+            font-size: 0.8em;
+            color: #666;
+            text-align: center;
+            margin-top: 15px;
+        }
     </style>
 </head>
+
 <body>
     <div id="login-view" class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="daniel_ai_logo.jpg" alt="Daniel_AI Logo" style="max-width: 150px; border-radius: 50%;">
+        </div>
         <h2>🔐 SafeCore Access</h2>
         <input type="text" id="username" placeholder="User ID" value="doctor-who">
         <label><input type="checkbox" id="mfa-toggle" checked> Simulate MFA Device</label>
@@ -39,4 +103,5 @@
 
     <script src="client.js"></script>
 </body>
+
 </html>
