@@ -3,6 +3,7 @@ const kms = require('../encryption_key_mgmt');
 const auditor = require('../immutable_auditor');
 const purifier = require('../ai_purifier');
 const { StateManager } = require('../../pkg/safecore_sdk/system/state_manager');
+const deceptionManager = require('../ai_purifier/deception');
 
 class LayerOrchestrator {
     constructor() {
@@ -56,9 +57,15 @@ class LayerOrchestrator {
         } catch (error) {
             auditor.log(`Security chain failure: ${error.message}`, "CRITICAL");
 
-            // Trigger LOCKDOWN for critical security violations (like malicious input)
+            // DECEPTION TRIGGER: Instead of just locking down, we divert to Honey-Token
             if (error.message.includes("Security Violation")) {
+                console.error(`[SafeCore] !!! CRITICAL THREAT DETECTED !!! Redirecting to Honey-Token (Quarantine)...`);
+
+                // Trigger background lockdown
                 StateManager.triggerLockdown(`Critical Security Violation Detected: ${error.message}`);
+
+                // Return fake data to attacker
+                return deceptionManager.generateHoneypotResponse(request.payload);
             }
 
             throw error;

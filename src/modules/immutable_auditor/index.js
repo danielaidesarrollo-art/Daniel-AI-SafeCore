@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const ledger = require('./ledger');
 
 class ImmutableAuditor {
     constructor() {
@@ -31,7 +32,7 @@ class ImmutableAuditor {
         this.lastHash = hash;
     }
 
-    log(message, level = "INFO", metadata = {}) {
+    async log(message, level = "INFO", metadata = {}) {
         const timestamp = new Date().toISOString();
         const entry = {
             timestamp,
@@ -43,26 +44,29 @@ class ImmutableAuditor {
 
         const entryString = JSON.stringify(entry);
         const currentHash = crypto.createHash('sha256').update(entryString).digest('hex');
-        
+
         const securedEntry = {
             ...entry,
             hash: currentHash
         };
 
         const logLine = JSON.stringify(securedEntry) + '\n';
-        
+
         try {
             fs.appendFileSync(this.logFile, logLine, 'utf8');
             this._saveLastHash(currentHash);
-            
+
+            // ASYNC PERSISTENCE TO HIGH-AVAILABILITY LEDGER
+            await ledger.commit(securedEntry);
+
             // Console output for visibility
             let color = "\x1b[37m"; // White
             if (level === "CRITICAL") color = "\x1b[31m"; // Red
             else if (level === "HIGH") color = "\x1b[33m"; // Yellow
             else if (level === "MEDIUM") color = "\x1b[36m"; // Cyan
-            
+
             console.log(`${color}[SAFECORE_AUDIT] [${level}] ${message}\x1b[0m`);
-            
+
             return currentHash;
         } catch (err) {
             console.error("❌ CRITICAL: Immutable Auditor failed to write log!", err);
@@ -78,17 +82,21 @@ class ImmutableAuditor {
 
         for (const line of lines) {
             if (!line) continue;
-            const entry = JSON.parse(line);
-            const { hash, ...data } = entry;
-            
-            // Verify current hash
-            const calculatedHash = crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
-            if (calculatedHash !== hash) return false;
-            
-            // Verify chain
-            if (data.prevHash !== expectedPrevHash) return false;
-            
-            expectedPrevHash = hash;
+            try {
+                const entry = JSON.parse(line);
+                const { hash, ...data } = entry;
+
+                // Verify current hash
+                const calculatedHash = crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
+                if (calculatedHash !== hash) return false;
+
+                // Verify chain
+                if (data.prevHash !== expectedPrevHash) return false;
+
+                expectedPrevHash = hash;
+            } catch (e) {
+                return false;
+            }
         }
         return true;
     }
