@@ -1,4 +1,4 @@
-const mdToPdf = require('md-to-pdf');
+const { mdToPdf } = require('md-to-pdf');
 const path = require('path');
 
 async function generatePdf() {
