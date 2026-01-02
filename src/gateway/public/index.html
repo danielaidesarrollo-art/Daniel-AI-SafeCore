@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daniel_AI SafeCore Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; }
+        .hidden { display: none; }
+        button { background: #007bff; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px; }
+        button:hover { background: #0056b3; }
+        input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
+        .alert { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 10px; display: none; }
+        .success { background: #e8f5e9; color: #2e7d32; padding: 10px; border-radius: 4px; margin-top: 10px; display: none; }
+        #timer { font-size: 0.8em; color: #666; text-align: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div id="login-view" class="container">
+        <h2>🔐 SafeCore Access</h2>
+        <input type="text" id="username" placeholder="User ID" value="doctor-who">
+        <label><input type="checkbox" id="mfa-toggle" checked> Simulate MFA Device</label>
+        <button onclick="login()">Authenticate</button>
+        <div id="login-msg" class="alert"></div>
+    </div>
+
+    <div id="dashboard-view" class="container hidden">
+        <h2>🏥 Clinical Dashboard</h2>
+        <p>Welcome, <span id="user-display"></span></p>
+        <hr>
+        <h3>Ingest Patient Data</h3>
+        <textarea id="clinical-data" rows="4" style="width:100%">Patient exhibits signs of... [PHI]</textarea>
+        <button onclick="submitData()">Encrypt & Archive</button>
+        <div id="app-msg" class="success"></div>
+        <div id="timer">Session expires in: <span id="time-left">900</span>s</div>
+        <button onclick="logout()" style="background: #666; margin-top: 20px;">Logout</button>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>

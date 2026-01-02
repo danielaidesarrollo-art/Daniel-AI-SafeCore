@@ -1,0 +1,20 @@
+{
+  "name": "daniel_ai_safecore",
+  "version": "1.0.0",
+  "description": "Daniel_AI SafeCore is a centralized, modular, and auditable security kernel designed to provide a robust security foundation for enterprise applications. It integrates advanced security mandates including sidecar/mTLS architectures, forensic-grade auditing, and AI-driven threat purification.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

@@ -73,6 +73,29 @@ All interactions with Daniel_AI SafeCore MUST occur through a designated sidecar
 - **Responsibility**: Sanitizes inputs and outputs to prevent injection attacks, data leakage (DLP), and model poisoning.
 - **Mechanism**: Real-time AI analysis of payload content before processing by core logic.
 
-### 5. Layer Orchestrator
-- **Responsibility**: The central "brain" that coordinates requests between modules.
-- **Workflow**: Receives request -> Calls Purifier -> Calls IAM -> Calls Logic/KMS -> Returns Response.
+## Pluggable Layer Integration
+
+Daniel_AI SafeCore enforces a "Plug-and-Play" security model for the Data and Logic layers via the SDK.
+
+### 1. Data Layer Integration
+- **Mechanism**: `DataLayerConnector`
+- **Workflow**: 
+    - The Data Layer imports the SDK.
+    - All writes pass through `protect_and_store()` (Auto-Encryption + Audit).
+    - All reads pass through `retrieve_and_expose()` (Decryption + Access Log).
+
+### 2. Logic Layer Integration
+- **Mechanism**: `LogicLayerConnector`
+- **Workflow**:
+    - The Logic Layer imports the SDK.
+    - `enforce_security_boundary()` is called at the start of every controller/function.
+    - `sanitize_input()` is used to scrub data before processing.
+
+```mermaid
+graph LR
+    Logic[Logic Layer] -->|SDK| LogicConn[Logic Connector]
+    Data[Data Layer] -->|SDK| DataConn[Data Connector]
+    
+    LogicConn -->|Auth/Sanitize| SafeCore
+    DataConn -->|Encrypt/Audit| SafeCore
+```
