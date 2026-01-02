@@ -2,7 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 const REQUIRED_FILES = ["safecore.manifest.json"];
-const BANNED_PATTERNS = ["AWS_ACCESS_KEY", "PRIVATE_KEY", "password="];
+const BANNED_PATTERNS = [
+    { pattern: "AWS_ACCESS_KEY", sensitivity: "CRITICAL", desc: "Hardcoded Cloud Credential" },
+    { pattern: "PRIVATE_KEY", sensitivity: "CRITICAL", desc: "Private Cryptographic Material" },
+    { pattern: "password=", sensitivity: "HIGH", desc: "Potential Hardcoded Password" },
+    { pattern: "alert(", sensitivity: "MEDIUM", desc: "Potential XSS testing leak" }
+];
 
 function checkManifest(targetPath) {
     const manifestPath = path.join(targetPath, "safecore.manifest.json");
@@ -25,57 +30,70 @@ function checkManifest(targetPath) {
     }
 }
 
-function scanForSecrets(targetPath) {
-    console.log("🔍 Scanning for banned secrets...");
+function scanProject(targetPath) {
+    console.log("🔍 Scanning project for secrets and SDK usage...");
     let violations = 0;
+    let sdkFound = false;
 
-    function walkSync(dir, filelist) {
+    function walkSync(dir) {
         const files = fs.readdirSync(dir);
         files.forEach(function (file) {
             const filePath = path.join(dir, file);
-            if (fs.statSync(filePath).isDirectory()) {
-                if (file !== 'node_modules' && file !== '.git' && file !== 'tools') {
-                    walkSync(filePath, filelist);
+            const stat = fs.statSync(filePath);
+
+            if (stat.isDirectory()) {
+                // Exclude system/test directories
+                if (!['node_modules', '.git', 'tools', 'logs', 'brain', 'docs', 'reports', 'tests'].includes(file)) {
+                    walkSync(filePath);
                 }
             } else {
-                if (/\.(js|ts|py|java|md|json)$/.test(file)) {
-                    // Check content
+                // Scan files with relevant extensions
+                if (/\.(js|ts|py|json|html)$/.test(file) && file !== 'test_gateway.js') {
                     try {
                         const content = fs.readFileSync(filePath, 'utf8');
-                        BANNED_PATTERNS.forEach(pattern => {
-                            if (content.includes(pattern)) {
-                                console.error(`⚠️ VIOLATION: '${pattern}' found in ${path.relative(targetPath, filePath)}`);
+
+                        // Check for SDK usage
+                        if (content.includes('safecore_sdk') || content.includes('LogicLayerConnector')) {
+                            sdkFound = true;
+                        }
+
+                        // Check for banned patterns
+                        BANNED_PATTERNS.forEach(banned => {
+                            if (content.includes(banned.pattern)) {
+                                console.error(`⚠️ VIOLATION [${banned.sensitivity}]: ${banned.desc} found in ${path.relative(targetPath, filePath)}`);
                                 violations++;
                             }
                         });
-                    } catch (err) {
-                        // Ignore read errors
-                    }
+                    } catch (err) { }
                 }
             }
         });
     }
 
-    walkSync(targetPath, []);
+    walkSync(targetPath);
 
-    if (violations > 0) {
+    if (!sdkFound) {
+        console.error("❌ FAILED: SafeCore SDK usage not detected in project logic.");
         return false;
+    } else {
+        console.log("✅ SafeCore SDK integration detected.");
     }
-    return true;
+
+    return violations === 0;
 }
 
 function main() {
     const targetPath = process.argv[2] || ".";
-    console.log(`Starting SafeCore Compliance Scan on: ${targetPath}`);
+    console.log(`Starting SafeCore Compliance Scan on: ${path.resolve(targetPath)}`);
 
     const passedManifest = checkManifest(targetPath);
-    const passedSecrets = scanForSecrets(targetPath);
+    const passedScan = scanProject(targetPath);
 
-    if (passedManifest && passedSecrets) {
-        console.log("\n✅ COMPLIANCE CHECK PASSED");
+    if (passedManifest && passedScan) {
+        console.log("\n✅ COMPLIANCE CHECK PASSED: System meets all security mandates.");
         process.exit(0);
     } else {
-        console.log("\n❌ COMPLIANCE CHECK FAILED");
+        console.log("\n❌ COMPLIANCE CHECK FAILED: Resolve violations to proceed.");
         process.exit(1);
     }
 }

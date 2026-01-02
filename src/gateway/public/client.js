@@ -27,6 +27,32 @@ function login() {
     document.getElementById('user-display').innerText = user;
 
     startSessionTimer();
+    pollSystemStatus();
+}
+
+function pollSystemStatus() {
+    setInterval(async () => {
+        try {
+            const response = await fetch('/health');
+            const data = await response.json();
+            const stateEl = document.getElementById('system-state');
+
+            if (data.system_integrity.state === 'LOCKDOWN') {
+                stateEl.innerText = 'LOCKDOWN';
+                stateEl.style.background = 'rgba(255, 77, 77, 0.2)';
+                stateEl.style.color = '#ff4d4d';
+                stateEl.style.borderColor = '#ff4d4d';
+                showError("app-msg", "SYSTEM LOCKDOWN ACTIVE: Security Breach Detected");
+            } else {
+                stateEl.innerText = 'NORMAL';
+                stateEl.style.background = 'rgba(0, 255, 0, 0.1)';
+                stateEl.style.color = '#00ff00';
+                stateEl.style.borderColor = '#00ff00';
+            }
+        } catch (e) {
+            console.warn("Status poll failed");
+        }
+    }, 5000);
 }
 
 function logout() {
@@ -47,7 +73,7 @@ function startSessionTimer() {
         document.getElementById('time-left').innerText = timeLeft;
 
         if (timeLeft <= 0) {
-            alert("Session Expired due to Inactivity");
+            showError("app-msg", "Session Expired due to Inactivity");
             logout();
         }
     }, 1000);
@@ -70,10 +96,9 @@ async function submitData() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'sub': sessionToken.sub,
-                'mfa_verified': sessionToken.mfa_verified.toString()
+                'authorization': 'Bearer token_admin_123'
             },
-            body: JSON.stringify({ data: data }) // SDK willsanitize this
+            body: JSON.stringify({ data: data })
         });
 
         const result = await response.json();
@@ -81,10 +106,10 @@ async function submitData() {
         if (response.ok) {
             showSuccess("app-msg", `Data Securely Archived.\nRef: ${result.ref}`);
         } else {
-            alert(`Error: ${result.error}`);
+            showError("app-msg", `Error: ${result.error}`);
         }
     } catch (e) {
-        alert("Network Error");
+        showError("app-msg", "Security Handshake Failed / Network Error");
     }
 }
 

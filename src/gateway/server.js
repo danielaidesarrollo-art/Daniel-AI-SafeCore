@@ -2,6 +2,7 @@ const express = require('express');
 const DataLayerConnector = require('../pkg/safecore_sdk/connectors/data_layer');
 const LogicLayerConnector = require('../pkg/safecore_sdk/connectors/logic_layer');
 const { secureLog } = require('../pkg/safecore_sdk/audit/interceptor');
+const SafeCore = require('../modules');
 
 const path = require('path');
 
@@ -22,24 +23,23 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Middleware: SafeCore Security Boundary ---
-app.use('/api', (req, res, next) => { // Apply SDK only to API routes
+app.use('/api', async (req, res, next) => { // Apply SDK only to API routes
     try {
+        const token = req.headers['authorization'] ? req.headers['authorization'].split(' ')[1] : null;
+
         // Construct Request Object for SDK
         const requestObj = {
             headers: req.headers,
-            last_active_timestamp: Date.now() / 1000 // In prod, get from session store
+            sessionId: req.headers['x-session-id'] || null
         };
 
         // Initialize Logic Connector
         const logic = new LogicLayerConnector(requestObj);
 
-        // 1. Enforce Auth & MFA
-        logic.enforceSecurityBoundary();
+        // 1. Enforce Auth & MFA (if token or session provided)
+        await logic.enforceSecurityBoundary('GATEWAY_API', 'ACCESS');
 
-        // 2. Enforce Auto-Logout Rule
-        logic.validateInactivity();
-
-        // 3. Attach SafeCore Context to Request
+        // 2. Attach SafeCore Context to Request
         req.safeCore = logic;
 
         next();
@@ -55,22 +55,22 @@ app.use('/api', (req, res, next) => { // Apply SDK only to API routes
  * Endpoint to ingest clinical data.
  * Applies Input Sanitization -> Encryption -> Storage using SDK.
  */
-app.post('/api/clinical/ingest', (req, res) => {
+app.post('/api/clinical/ingest', async (req, res) => {
     try {
         const securityLayer = req.safeCore;
 
         // 1. Sanitize and Purify Input
         const rawData = req.body.data;
-        const cleanData = securityLayer.sanitizeInput(rawData);
+        const cleanData = await securityLayer.sanitizeInput(rawData);
 
         // 2. Encrypt and Archive via Data Layer
         const dataLayer = new DataLayerConnector("CLINICAL_GATEWAY");
-        const encryptedResult = dataLayer.protectAndStore(cleanData, "clinical_record");
+        const encryptedResult = await dataLayer.protectAndStore(cleanData, "clinical_record");
 
         res.json({
             status: "SUCCESS",
             ref: `SC-${Math.floor(Math.random() * 1000000)}`,
-            protected_data: encryptedResult // Mock encrypted payload
+            protected_data: encryptedResult
         });
 
     } catch (err) {
@@ -84,11 +84,29 @@ app.post('/api/clinical/ingest', (req, res) => {
 
 /**
  * Health Check (Public)
- * Bypasses strict checks for monitoring, but logs access.
  */
 app.get('/health', (req, res) => {
     secureLog("Health check accessed", "LOW");
-    res.json({ status: "SafeCore Gateway Active", checks: "IAM, MFA, Audit, Encryption" });
+    res.json({
+        status: "SafeCore Gateway Active",
+        system_integrity: SafeCore.status()
+    });
+});
+
+/**
+ * Security Dashboard (Requires Admin)
+ */
+app.get('/api/admin/dashboard', async (req, res) => {
+    try {
+        // Verification happens in middleware, but we can do extra checks here
+        res.json({
+            status: "SECURE_DASHBOARD_ACTIVE",
+            engine_status: SafeCore.status(),
+            logs_path: path.join(__dirname, '../../logs/safecore.audit.log')
+        });
+    } catch (err) {
+        res.status(403).json({ error: err.message });
+    }
 });
 
 // Start Server (if run directly)

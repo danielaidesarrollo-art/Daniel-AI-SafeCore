@@ -19,34 +19,35 @@ async function runTests() {
     console.log("\n[Test 1] Unauthorized Access");
     try {
         const connector = new LogicLayerConnector({ headers: {} });
-        connector.enforceSecurityBoundary();
+        await connector.enforceSecurityBoundary();
         assert(false, "Should have thrown Access Denied");
     } catch (e) {
-        assert(e.message.includes("Access Denied"), "Correctly denied access");
+        assert(e.message.includes("Access Denied") || e.message.includes("Authentication Failed"), "Correctly denied access");
     }
 
     // 2. Test Authorized Access
     console.log("\n[Test 2] Authorized Access");
     try {
+        // Using a valid token from our mock IAM
         const connector = new LogicLayerConnector({
-            headers: { 'authorization': 'Bearer valid_token' },
-            last_active_timestamp: Date.now() / 1000
+            headers: { 'authorization': 'Bearer token_admin_123' }
         });
-        connector.enforceSecurityBoundary();
-        assert(connector.isAuthenticated === true, "Session authenticated");
+
+        await connector.enforceSecurityBoundary('SYSTEM_DASHBOARD', 'READ');
+        assert(connector.isAuthenticated === true, "Session authenticated and boundary crossed");
 
         // 3. Test Input Sanitization (Clean)
         const cleanInput = "Hello SafeCore";
-        const result = connector.sanitizeInput(cleanInput);
+        const result = await connector.sanitizeInput(cleanInput);
         assert(result === cleanInput, "Clean input passed through");
 
         // 4. Test Input Sanitization (Malicious)
         console.log("\n[Test 3] Threat Detection");
         try {
-            connector.sanitizeInput("SELECT * FROM users");
+            await connector.sanitizeInput("SELECT * FROM users");
             assert(false, "Should have blocked SQL injection");
         } catch (e) {
-            assert(e.message.includes("Threat Detected"), "Correctly blocked SQLi");
+            assert(e.message.includes("Security Violation") || e.message.includes("Threat Detected"), "Correctly blocked SQLi");
         }
 
     } catch (e) {

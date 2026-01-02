@@ -41,30 +41,28 @@ function testGateway() {
             console.log(`   Response: ${res1.status} (Expected 403)`);
 
             // TEST 2: Authorized Request
-            console.log("\n[Test 2] Sending Request WITH MFA Headers...");
+            console.log("\n[Test 2] Sending Request WITH Authorization Header...");
             const res2 = await makeRequest(port, '/api/clinical/ingest', 'POST',
                 {
                     'Content-Type': 'application/json',
-                    'sub': 'doctor-who',
-                    'mfa_verified': 'true'
+                    'authorization': 'Bearer token_admin_123'
                 },
                 JSON.stringify({ data: "patient info" })
             );
-            console.log(`   Response: ${res2.status} (Expected 201)`);
+            console.log(`   Response: ${res2.status} (Expected 200)`);
 
             // TEST 3: Malicious Payload
             console.log("\n[Test 3] Sending Malicious Payload (<script>)...");
             const res3 = await makeRequest(port, '/api/clinical/ingest', 'POST',
                 {
                     'Content-Type': 'application/json',
-                    'sub': 'hacker',
-                    'mfa_verified': 'true'
+                    'authorization': 'Bearer token_admin_123'
                 },
                 JSON.stringify({ data: "<script>alert(1)</script>" })
             );
-            console.log(`   Response: ${res3.status} (Expected 403/500)`);
+            console.log(`   Response: ${res3.status} (Expected 403)`);
 
-            if (res1.status === 403 && res2.status === 201 && (res3.status === 403 || res3.status === 500)) {
+            if (res1.status === 403 && res2.status === 200 && res3.status === 403) {
                 console.log("\n✅ GATEWAY INTEGRATION TEST PASSED");
             } else {
                 console.log("\n❌ GATEWAY INTEGRATION TEST FAILED");

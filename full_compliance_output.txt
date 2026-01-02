@@ -1,0 +1,6 @@
+﻿Starting SafeCore Compliance Scan on: C:\Users\johan\.gemini\antigravity\scratch\Daniel_AI_SafeCore
+Ô£à Manifest found. Level: L3
+­ƒöì Scanning project for secrets and SDK usage...
+Ô£à SafeCore SDK integration detected.
+
+ÔØî COMPLIANCE CHECK FAILED: Resolve violations to proceed.

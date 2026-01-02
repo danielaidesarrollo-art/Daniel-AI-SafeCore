@@ -1,20 +1,24 @@
-const { secureLog } = require('../audit/interceptor');
-const AESService = require('../encryption/aes_service');
+const orchestrator = require('../../../modules').orchestrator;
 
 class DataLayerConnector {
     constructor(contextId) {
         this.contextId = contextId;
-        this.aes = new AESService();
     }
 
-    protectAndStore(data, recordType = "generic") {
-        secureLog(`Writing protected record: ${recordType}`, "HIGH");
-        return this.aes.encryptSensitiveData(data);
+    async protectAndStore(data, recordType = "generic") {
+        return await orchestrator.executeSecurityChain({
+            action: 'PROTECT_AND_STORE',
+            encryptData: data,
+            metadata: { contextId: this.contextId, recordType }
+        });
     }
 
-    retrieveAndExpose(encryptedData) {
-        secureLog(`Reading protected record`, "HIGH");
-        return this.aes.decryptSensitiveData(encryptedData);
+    async retrieveAndExpose(encryptedData) {
+        return await orchestrator.executeSecurityChain({
+            action: 'RETRIEVE_AND_EXPOSE',
+            decryptData: encryptedData,
+            metadata: { contextId: this.contextId }
+        });
     }
 }
 
