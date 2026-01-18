@@ -1,14 +1,19 @@
 {
-    "project_name": "Daniel_AI_SafeCore",
+    "project_name": "Daniel_AI_Sirius",
     "project_id": "00000000-0000-0000-0000-000000000001",
     "compliance_level": "L3",
+    "compliance_standards": [
+        "HIPAA",
+        "LEY_1581"
+    ],
     "features": {
         "iam": true,
         "audit": true,
         "encryption": true,
-        "ai_purifier": true
+        "ai_purifier": true,
+        "compliance_governance": true
     },
     "contacts": [
-        "architect@daniel.ai"
+        "sirius-governance@daniel.ai"
     ]
 }
